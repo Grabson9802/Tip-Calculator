@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var tip: String?
     @State private var message: String = ""
     
+    let tipCalculator = TipCalculator()
+    
     var body: some View {
         NavigationView {
             
@@ -21,6 +23,7 @@ struct ContentView: View {
                 
                 TextField("Enter total", text: $total)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("totalTextField")
                 
                 Picker(selection: $tipPercentage) {
                     Text("10%").tag(0.1)
@@ -28,21 +31,50 @@ struct ContentView: View {
                     Text("30%").tag(0.3)
                 } label: {
                     EmptyView()
-                }.pickerStyle(.segmented)
-
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("tipPercentageSegmentedControl")
                 
-                Button("Calculate Tip") {
-                  
+                Button {
                     
-                }.padding(.top, 20)
+                    tip = ""
+                    message = ""
+                  
+                    guard let total = Double(total) else {
+                        
+                        message = "Invalid input"
+                        
+                        return
+                    }
+                    
+                    do {
+                        let result = try tipCalculator.calculate(total: total, tipPercentage: tipPercentage)
+                        
+                        let formatter = NumberFormatter()
+                        formatter.numberStyle = .currency
+                        tip = formatter.string(from: NSNumber(value: result))
+                        
+                    } catch TipCalculatorError.invalidInput {
+                        message = "Invalid input"
+                    } catch {
+                        message = error.localizedDescription
+                    }
+                    
+                } label: {
+                    Text("Calculate tip")
+                        .accessibilityIdentifier("calculateTipButton")
+                }
+                .padding(.top, 20)
                 
                 Text(message)
                     .padding(.top, 50)
+                    .accessibilityIdentifier("messageText")
                 
                 Spacer()
                 
                 Text(tip ?? "")
                     .font(.system(size: 54))
+                    .accessibilityIdentifier("tipText")
                 
                 Spacer()
                 .navigationTitle("Tip Calculator")
